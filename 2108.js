@@ -36,7 +36,7 @@ function file2recs(file) {
 		}
 		while (oldSh == arStr[col.sh]) {
 			if (oldFd != arStr[col.fd]) {
-				var k = (arStr[col.tr] == "Приход.") ? 1 : -1;
+				var k = (arStr[col.tr] == "Приход.") ? 1 : -1; //приход +, возврат прихода -
 				curRec.cash += new Number(arStr[col.ch])*k;
 				curRec.elec += new Number(arStr[col.el])*k;
 				oldFd = arStr[col.fd];
@@ -51,7 +51,7 @@ function file2recs(file) {
 				}
 				if (newCom) {
 					var com = {};
-					com.p2 = (arStr[col.p2] == "Товар") ? 1 : 4;
+					com.p2 = (arStr[col.p2] == "Товар") ? 1 : 4; // или услуга
 					com.nm = arStr[col.nm];
 					com.pr = new Number(arStr[col.pr]);
 					com.qn = new Number(arStr[col.qn])*k;
@@ -78,7 +78,30 @@ function rec2fptr(rec) {
 	Fptr.utilFormTlv(); /* Выполняем метод utilFormTlv() для формирования составного тега 1174 из тегов 1177, 1178, 1179 */
 	correctionInfo = Fptr.getParamByteArray(Fptr.LIBFPTR_PARAM_TAG_VALUE); /* забираем результат (массив байтов для тега 1174) в LIBFPTR_PARAM_TAG_VALUE */
 	Fptr.setParam(1174, correctionInfo); /* записываем собранный массив байтов в тег 1174 */
+	Fptr.setParam(1173, 0); /* тег 1173 - "Тип коррекции", принимает только одно из двух возможных значений:
+	"0" - самостоятельная операция,
+	"1" - операция по предписанию налогового органа об устранении выявленного нарушения законодательства Российской Федерации о применении ККТ. */
 	//Fptr.setParam(1192,""); //указав фискальный признак ошибочного чека (по тегу 1192 «дополнительные реквизиты чека»).
-
 	Fptr.openReceipt();
+	for (var i = 0; i < rec.coms.length; i++) {
+		var com = rec.coms[i];
+		Fptr.setParam(Fptr.LIBFPTR_PARAM_COMMODITY_NAME, com.nm); /* LIBFPTR_PARAM_COMMODITY_NAME - название товара */
+		Fptr.setParam(Fptr.LIBFPTR_PARAM_PRICE, com.pr); /* LIBFPTR_PARAM_PRICE - цена за единицу */ 
+		Fptr.setParam(Fptr.LIBFPTR_PARAM_QUANTITY, com.qn); /* LIBFPTR_PARAM_QUANTITY - количество единиц товара */
+		Fptr.setParam(Fptr.LIBFPTR_PARAM_TAX_TYPE, Fptr.LIBFPTR_TAX_NO); /* LIBFPTR_PARAM_TAX_TYPE - номер налоговой ставки, LIBFPTR_TAX_NO - не облагается */
+		Fptr.setParam(1212, com.p2); /* тег 1212	Признак предмета расчета*/
+		Fptr.registration(); /* выполняем метод registration() для регистрации позиции */
+	}
+	if (rec.cash != 0 ){
+		Fptr.setParam(Fptr.LIBFPTR_PARAM_PAYMENT_TYPE, Fptr.LIBFPTR_PT_CASH); /* LIBFPTR_PARAM_PAYMENT_TYPE - способ расчета, LIBFPTR_PT_CASH - наличными */
+		Fptr.setParam(Fptr.LIBFPTR_PARAM_PAYMENT_SUM, rec.cash); /* LIBFPTR_PARAM_PAYMENT_SUM - сумму расчета */
+		Fptr.payment(); /* выполняем метод payment() для регистрации оплаты чека */
+	}
+	if (rec.elec != 0 ){
+		Fptr.setParam(Fptr.LIBFPTR_PARAM_PAYMENT_TYPE, Fptr.LIBFPTR_PT_ELECTRONICALLY); /* LIBFPTR_PT_ELECTRONICALLY - безналичными;*/
+		Fptr.setParam(Fptr.LIBFPTR_PARAM_PAYMENT_SUM, rec.elec); /* LIBFPTR_PARAM_PAYMENT_SUM - сумму расчета */
+		Fptr.payment(); /* выполняем метод payment() для регистрации оплаты чека */
+	}
+	Fptr.receiptTotal(); /* выполняем метод receiptTotal() для регистрации итога чека */
+	Fptr.closeReceipt(); /* выполняем метод closeReceipt() для закрытия чека */
 }
