@@ -90,6 +90,7 @@ function rec2fptr(rec) {
 		Fptr.setParam(Fptr.LIBFPTR_PARAM_QUANTITY, com.qn); /* LIBFPTR_PARAM_QUANTITY - количество единиц товара */
 		Fptr.setParam(Fptr.LIBFPTR_PARAM_TAX_TYPE, Fptr.LIBFPTR_TAX_NO); /* LIBFPTR_PARAM_TAX_TYPE - номер налоговой ставки, LIBFPTR_TAX_NO - не облагается */
 		Fptr.setParam(1212, com.p2); /* тег 1212	Признак предмета расчета*/
+		Fptr.setParam(2108, 0); /*2108	Мера количества предмета расчета	int	≥ 1.2*/
 		Fptr.registration(); /* выполняем метод registration() для регистрации позиции */
 	}
 	if (rec.cash != 0 ){
