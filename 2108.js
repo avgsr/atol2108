@@ -115,7 +115,7 @@ function rec2fptr(rec) {
 	if (!Fptr.getParamBool(Fptr.LIBFPTR_PARAM_DOCUMENT_CLOSED)) // Документ не закрылся. Требуется его отменить (если это чек) и сформировать заново
 	{	Fptr.cancelReceipt();
 		msg = Fptr.errorDescription();
-		return msg;
+		return false;
 	}
 
 	if (!Fptr.getParamBool(Fptr.LIBFPTR_PARAM_DOCUMENT_PRINTED)) {// Можно сразу вызвать метод допечатывания документа, он завершится с ошибкой, если это невозможно
@@ -125,4 +125,5 @@ function rec2fptr(rec) {
 			continue;
 		}
 	}
+	return true;
 }
