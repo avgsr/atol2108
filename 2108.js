@@ -104,6 +104,25 @@ function rec2fptr(rec) {
 		Fptr.setParam(Fptr.LIBFPTR_PARAM_PAYMENT_SUM, rec.elec); /* LIBFPTR_PARAM_PAYMENT_SUM - сумму расчета */
 		Fptr.payment(); /* выполняем метод payment() для регистрации оплаты чека */
 	}
-	Fptr.receiptTotal(); /* выполняем метод receiptTotal() для регистрации итога чека */
+	//Метод не является обязательным. Если его не использовать, сумма чека будет посчитана автоматически, без округлений копеек.
+	//Fptr.receiptTotal(); /* выполняем метод receiptTotal() для регистрации итога чека */
 	Fptr.closeReceipt(); /* выполняем метод closeReceipt() для закрытия чека */
+	while (Fptr.checkDocumentClosed() < 0) { // Не удалось проверить состояние документа. Вывести пользователю текст ошибки, попросить устранить неполадку и повторить запрос
+		msg = Fptr.errorDescription();
+		Fptr.logWrite("FiscalPrinter", Fptr.LIBFPTR_LOG_ERROR, msg);
+		continue;
+	}
+	if (!Fptr.getParamBool(Fptr.LIBFPTR_PARAM_DOCUMENT_CLOSED)) // Документ не закрылся. Требуется его отменить (если это чек) и сформировать заново
+	{	Fptr.cancelReceipt();
+		msg = Fptr.errorDescription();
+		return msg;
+	}
+
+	if (!Fptr.getParamBool(Fptr.LIBFPTR_PARAM_DOCUMENT_PRINTED)) {// Можно сразу вызвать метод допечатывания документа, он завершится с ошибкой, если это невозможно
+		while (Fptr.continuePrint() < 0){// Если не удалось допечатать документ - показать пользователю ошибку и попробовать еще раз.
+			msg = Fptr.errorDescription();
+			Fptr.logWrite("FiscalPrinter", Fptr.LIBFPTR_LOG_ERROR, "Не удалось напечатать документ (Ошибка \"" + msg+ "\"). Устраните неполадку и повторите.");
+			continue;
+		}
+	}
 }
