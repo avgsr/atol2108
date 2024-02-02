@@ -82,6 +82,7 @@ function rec2fptr(rec) {
 	"0" - самостоятельная операция,
 	"1" - операция по предписанию налогового органа об устранении выявленного нарушения законодательства Российской Федерации о применении ККТ. */
 	//Fptr.setParam(1192,""); //указав фискальный признак ошибочного чека (по тегу 1192 «дополнительные реквизиты чека»).
+	//Fptr.setParam(Fptr.LIBFPTR_PARAM_RECEIPT_ELECTRONICALLY, true); /* Чтобы чек не печатался (электронный чек), нужно установить параметру LIBFPTR_PARAM_RECEIPT_ELECTRONICALLY значение true. */
 	Fptr.openReceipt();
 	for (var i = 0; i < rec.coms.length; i++) {
 		var com = rec.coms[i];
